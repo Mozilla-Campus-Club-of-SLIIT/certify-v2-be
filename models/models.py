@@ -1,10 +1,10 @@
 from fastapi import UploadFile
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class AddTemplateRequestModel(BaseModel):
 	font_size: str
-	font_color: str
+	font_color: str = Field(pattern=r'^#(?:[0-9a-fA-F]{3}){1,2}$')
 	name_x_pos: int
 	name_y_pos: int
 	template_name: str | None = None

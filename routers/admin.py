@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, UploadFile, HTTPException, status
 from models.models import AddCertificateRequestModel, AddTemplateRequestModel
 from services.database import add_certificate, add_template
 from services.storage import upload_template
@@ -16,7 +16,7 @@ router = APIRouter(
 async def admin_add_template(
     template: Annotated[UploadFile, File(...)],
     font_size: Annotated[str, Form(...)],
-    font_color: Annotated[str, Form(...)],
+    font_color: Annotated[str, Form(pattern=r'^#(?:[0-9a-fA-F]{3}){1,2}$')],
     name_x_pos: Annotated[int, Form(...)],
     name_y_pos: Annotated[int, Form(...)],
     template_name: Annotated[str | None, Form()] = None,
@@ -25,6 +25,13 @@ async def admin_add_template(
     issuer_name: Annotated[str | None, Form()] = None,
     notes: Annotated[str | None, Form()] = None,
 ):
+    ALLOWED_CONTENT_TYPES = ["application/pdf", "image/png", "image/jpeg"]
+    if template.content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid template file type. Allowed types: {', '.join(ALLOWED_CONTENT_TYPES)}"
+        )
+
     request_data = AddTemplateRequestModel(
         font_size=font_size,
         font_color=font_color,
