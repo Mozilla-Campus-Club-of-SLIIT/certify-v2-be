@@ -3,6 +3,7 @@ uvicorn
 python-dotenv
 supabase
 python-multipart
+PyJWT
 reportlab
 PyPDF2
 httpx
