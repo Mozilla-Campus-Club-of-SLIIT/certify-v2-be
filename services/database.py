@@ -5,7 +5,7 @@ from models.models import (
 	AddCertificateRequestModel,
 	AddTemplateRequestModel,
 	RevokeCertificateRequestModel,
-	AddBadgeRequestModel
+	AddBadgeRequestModel,
 	AddBadgeTemplateRequestModel,
 )
 from services.supabase_client import get_supabase_client
