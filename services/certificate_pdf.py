@@ -1,4 +1,5 @@
 import io
+import re
 
 import httpx
 from PyPDF2 import PdfReader, PdfWriter
@@ -6,12 +7,20 @@ from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 
 
+def _normalize_hex(value: str) -> str:
+    """Expand 3-digit hex (#RGB) to 6-digit (#RRGGBB); ReportLab parses hex as a plain integer."""
+    value = value.strip()
+    if re.fullmatch(r"#[0-9a-fA-F]{3}", value):
+        return "#" + "".join(c * 2 for c in value[1:])
+    return value
+
+
 def _to_pdf_color(value: str | None):
     if not value:
         return colors.white
 
     try:
-        return colors.HexColor(value)
+        return colors.HexColor(_normalize_hex(value))
     except Exception:
         return colors.white
 
