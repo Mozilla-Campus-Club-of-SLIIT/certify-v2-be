@@ -32,12 +32,16 @@ def preview_certificate(certificate_id: str):
         if not template.get("url"):
             raise ValueError("Template URL is missing")
 
+        name_x_pos = float(template["name_x_pos"]) if template.get("name_x_pos") is not None else 720.0
+        name_y_pos = float(template["name_y_pos"]) if template.get("name_y_pos") is not None else 360.0
+        font_size = float(template["font_size"]) if template.get("font_size") is not None else 55.0
+
         pdf_bytes = generate_certificate_pdf_bytes(
             template_url=template["url"],
             recipient_name=certificate["recipient_name"],
-            name_x_pos=float(template.get("name_x_pos") or 720),
-            name_y_pos=float(template.get("name_y_pos") or 360),
-            font_size=float(template.get("font_size") or 55),
+            name_x_pos=name_x_pos,
+            name_y_pos=name_y_pos,
+            font_size=font_size,
             font_color=template.get("font_color"),
         )
 
