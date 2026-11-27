@@ -56,8 +56,14 @@ def preview_certificate(certificate_id: str):
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
+    link_header = f'</api/certificate/{certificate_id}>; rel="describedby"'
+
     if certificate.get("revoked"):
-        raise HTTPException(status_code=410, detail="Certificate has been revoked")
+        raise HTTPException(
+            status_code=410,
+            detail="Certificate has been revoked",
+            headers={"Link": link_header},
+        )
 
     try:
         template = get_template_by_id(certificate["template_id"])
@@ -82,7 +88,8 @@ def preview_certificate(certificate_id: str):
             content=pdf_bytes,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f'inline; filename="certificate-{certificate_id}.pdf"'
+                "Content-Disposition": f'inline; filename="certificate-{certificate_id}.pdf"',
+                "Link": link_header,
             },
         )
     except Exception as exc:

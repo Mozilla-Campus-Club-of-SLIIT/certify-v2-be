@@ -133,6 +133,7 @@ def test_preview_certificate_via_testclient_respects_zero(
     assert response.content == b"%PDF-mock-content"
     assert response.headers["content-type"] == "application/pdf"
     assert 'filename="certificate-CERT-004.pdf"' in response.headers["content-disposition"]
+    assert response.headers["link"] == '</api/certificate/CERT-004>; rel="describedby"'
     mock_generate_pdf.assert_called_once_with(
         template_url="https://example.com/template.pdf",
         recipient_name="Charlie",
@@ -199,6 +200,20 @@ def test_verify_certificate_revoked(mock_get_cert):
     assert certificate["revoke_reason"] == "Issued by mistake"
     assert "revoked_by" not in certificate
     assert "recipient_email" not in certificate
+
+
+@patch("routers.certificate.get_certificate_by_certificate_id")
+def test_preview_revoked_links_to_verification_endpoint(mock_get_cert):
+    mock_get_cert.return_value = {
+        "certificate_id": "CERT-102",
+        "recipient_name": "Fire Fox",
+        "revoked": True,
+    }
+
+    response = client.get("/api/certificate/CERT-102/preview")
+
+    assert response.status_code == 410
+    assert response.headers["link"] == '</api/certificate/CERT-102>; rel="describedby"'
 
 
 @patch("routers.certificate.get_certificate_by_certificate_id")
