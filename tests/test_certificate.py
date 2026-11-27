@@ -133,6 +133,7 @@ def test_preview_certificate_via_testclient_respects_zero(
     assert response.content == b"%PDF-mock-content"
     assert response.headers["content-type"] == "application/pdf"
     assert 'filename="certificate-CERT-004.pdf"' in response.headers["content-disposition"]
+    assert response.headers["link"] == '</api/certificate/CERT-004>; rel="describedby"'
     mock_generate_pdf.assert_called_once_with(
         template_url="https://example.com/template.pdf",
         recipient_name="Charlie",
@@ -141,4 +142,86 @@ def test_preview_certificate_via_testclient_respects_zero(
         font_size=30.0,
         font_color="#FFFFFF",
     )
+
+
+@patch("routers.certificate.get_certificate_by_certificate_id")
+def test_verify_certificate_valid(mock_get_cert):
+    mock_get_cert.return_value = {
+        "certificate_id": "CERT-100",
+        "recipient_name": "Fire Fox",
+        "recipient_email": "fox@example.com",
+        "course_name": "Python 101",
+        "event_name": "Code Night",
+        "event_date": "2026-10-01",
+        "issuer_name": "Mozilla Campus Club",
+        "revoked": False,
+        "revoked_at": None,
+        "revoked_by": None,
+        "revoke_reason": None,
+    }
+
+    response = client.get("/api/certificate/CERT-100")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["certificate"] == {
+        "certificate_id": "CERT-100",
+        "recipient_name": "Fire Fox",
+        "course_name": "Python 101",
+        "event_name": "Code Night",
+        "event_date": "2026-10-01",
+        "issuer_name": "Mozilla Campus Club",
+        "is_valid": True,
+        "revoked": False,
+        "revoked_at": None,
+        "revoke_reason": None,
+    }
+
+
+@patch("routers.certificate.get_certificate_by_certificate_id")
+def test_verify_certificate_revoked(mock_get_cert):
+    mock_get_cert.return_value = {
+        "certificate_id": "CERT-101",
+        "recipient_name": "Fire Fox",
+        "revoked": True,
+        "revoked_at": "2026-11-01T10:00:00+00:00",
+        "revoked_by": "admin@example.com",
+        "revoke_reason": "Issued by mistake",
+    }
+
+    response = client.get("/api/certificate/CERT-101")
+
+    assert response.status_code == 200
+    certificate = response.json()["certificate"]
+    assert certificate["is_valid"] is False
+    assert certificate["revoked"] is True
+    assert certificate["revoked_at"] is not None
+    assert certificate["revoke_reason"] == "Issued by mistake"
+    assert "revoked_by" not in certificate
+    assert "recipient_email" not in certificate
+
+
+@patch("routers.certificate.get_certificate_by_certificate_id")
+def test_preview_revoked_links_to_verification_endpoint(mock_get_cert):
+    mock_get_cert.return_value = {
+        "certificate_id": "CERT-102",
+        "recipient_name": "Fire Fox",
+        "revoked": True,
+    }
+
+    response = client.get("/api/certificate/CERT-102/preview")
+
+    assert response.status_code == 410
+    assert response.headers["link"] == '</api/certificate/CERT-102>; rel="describedby"'
+
+
+@patch("routers.certificate.get_certificate_by_certificate_id")
+def test_verify_certificate_not_found(mock_get_cert):
+    mock_get_cert.side_effect = ValueError("Certificate not found")
+
+    response = client.get("/api/certificate/MISSING")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Certificate not found"
 
