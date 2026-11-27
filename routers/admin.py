@@ -25,7 +25,7 @@ async def admin_add_template(
     issuer_name: Annotated[str | None, Form()] = None,
     notes: Annotated[str | None, Form()] = None,
 ):
-    ALLOWED_CONTENT_TYPES = ["application/pdf", "image/png", "image/jpeg"]
+    ALLOWED_CONTENT_TYPES = ["application/pdf"]
     if template.content_type not in ALLOWED_CONTENT_TYPES:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
