@@ -34,6 +34,24 @@ class RevokeCertificateRequestModel(BaseModel):
 	reason: str | None = None
 
 
+class CertificateVerificationModel(BaseModel):
+	certificate_id: str
+	recipient_name: str
+	course_name: str | None = None
+	event_name: str | None = None
+	event_date: str | None = None
+	issuer_name: str | None = None
+	is_valid: bool
+	revoked: bool
+	revoked_at: str | datetime | None = None
+	revoke_reason: str | None = None
+
+
+class CertificateVerificationResponseModel(BaseModel):
+	ok: bool
+	certificate: CertificateVerificationModel
+
+
 class BadgeTemplate(BaseModel):
 	id: int
 	created_at: str | datetime
